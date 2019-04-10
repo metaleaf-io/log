@@ -16,78 +16,45 @@
 
 package log
 
-import "testing"
+import (
+	"github.com/metaleaf-io/assert"
+	"testing"
+)
 
 func TestLevel_String(t *testing.T) {
-	var actual, expected string
+	var actual string
+	var assert = assert.With(t)
 
 	actual = DEBUG.String()
-	expected = "DEBUG"
-	if actual != expected {
-		t.Error("TestLevel_String expected:", expected, "actual:", actual)
-	}
+	assert.That(actual).IsEqualTo("DEBUG")
 
 	actual = INFO.String()
-	expected = "INFO"
-	if actual != expected {
-		t.Error("TestLevel_String expected:", expected, "actual:", actual)
-	}
+	assert.That(actual).IsEqualTo("INFO")
 
 	actual = WARN.String()
-	expected = "WARN"
-	if actual != expected {
-		t.Error("TestLevel_String expected:", expected, "actual:", actual)
-	}
+	assert.That(actual).IsEqualTo("WARN")
 
 	actual = ERROR.String()
-	expected = "ERROR"
-	if actual != expected {
-		t.Error("TestLevel_String expected:", expected, "actual:", actual)
-	}
+	assert.That(actual).IsEqualTo("ERROR")
 
-	// Test with a bad level.
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("TestLevel_String: did not panic")
-		}
-	}()
-
-	Level(-1).String()
+	assert.ThatPanics(func() { Level(-1).String() })
 }
 
 func TestParse(t *testing.T) {
-	var actual, expected Level
+	var actual Level
+	var assert = assert.With(t)
 
 	actual = Parse("DEBUG")
-	expected = DEBUG
-	if actual != expected {
-		t.Error("TestParse expected:", expected, "actual:", actual)
-	}
+	assert.That(actual).IsEqualTo(DEBUG)
 
 	actual = Parse("INFO")
-	expected = INFO
-	if actual != expected {
-		t.Error("TestParse expected:", expected, "actual:", actual)
-	}
+	assert.That(actual).IsEqualTo(INFO)
 
 	actual = Parse("WARN")
-	expected = WARN
-	if actual != expected {
-		t.Error("TestParse expected:", expected, "actual:", actual)
-	}
+	assert.That(actual).IsEqualTo(WARN)
 
 	actual = Parse("ERROR")
-	expected = ERROR
-	if actual != expected {
-		t.Error("TestParse expected:", expected, "actual:", actual)
-	}
+	assert.That(actual).IsEqualTo(ERROR)
 
-	// Test with a bad string.
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("TestParse: did not panic")
-		}
-	}()
-
-	Parse("foobar")
+	assert.ThatPanics(func() { Parse("foobar") })
 }
