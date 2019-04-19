@@ -22,6 +22,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -80,44 +81,70 @@ func SetServer(address string) {
 }
 
 // Debug emits a message with the DEBUG level.
-func Debug(msg string) {
+func Debug(msg string, fields ...Field) {
 	if level <= DEBUG {
-		emit(DEBUG, msg)
+		emit(DEBUG, msg, fields)
 	}
 }
 
 // Info emits a message with the INFO level.
-func Info(msg string) {
+func Info(msg string, fields ...Field) {
 	if level <= INFO {
-		emit(INFO, msg)
+		emit(INFO, msg, fields)
 	}
 }
 
 // Warn emits a message with the WARN level.
-func Warn(msg string) {
+func Warn(msg string, fields ...Field) {
 	if level <= WARN {
-		emit(WARN, msg)
+		emit(WARN, msg, fields)
 	}
 }
 
 // Error emits a message with the ERROR level.
-func Error(msg string) {
+func Error(msg string, fields ...Field) {
 	if level <= ERROR {
-		emit(ERROR, msg)
+		emit(ERROR, msg, fields)
 	}
 }
 
 // emit generates the log message and sends it.
-func emit(level Level, message string) {
+func emit(level Level, message string, fields []Field) {
 	// Pull the timestamp now so the UDP aggregator and the console are consistent.
 	t := time.Now().UTC()
 
 	// Send the message to the log aggregator. Note that UDP is fast, but
 	// unreliable. Messages may be received out-of-order or not at all.
 	if conn != nil {
-		go conn.Write([]byte("{\"time\":" + strconv.FormatInt(t.UnixNano(), 10) + ",\"name\":\"" + programName + "\",\"level\":\"" + level.String() + "\",\"message\":\"" + message + "\"}"))
+		go conn.Write([]byte("{\"time\":" + strconv.FormatInt(t.UnixNano(), 10) + ",\"name\":\"" + programName + "\",\"level\":\"" + level.String() + "\",\"message\":\"" + message + "\",\"fields\":" + fieldJson(fields) + "}"))
 	}
 
 	// Send the message to the console logger.
-	writer.Write([]byte(t.Format(ISO8601Micro) + " [" + programName + "] " + level.String() + " " + message + "\n"))
+	writer.Write([]byte(t.Format(ISO8601Micro) + " [" + programName + "] " + level.String() + " " + message + fieldString(fields) + "\n"))
+}
+
+func fieldJson(fields []Field) string {
+	var builder strings.Builder
+	builder.WriteRune('{')
+	addComma := false
+	for _, field := range fields {
+		if addComma {
+			builder.WriteRune(',')
+		} else {
+			addComma = true
+		}
+
+		builder.WriteString(field.Json())
+	}
+	builder.WriteRune('}')
+	return builder.String()
+}
+
+func fieldString(fields []Field) string {
+	var builder strings.Builder
+	for _, field := range fields {
+		builder.WriteRune(' ')
+		builder.WriteString(field.String())
+	}
+	return builder.String()
 }

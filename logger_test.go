@@ -20,50 +20,93 @@ import (
 	"bytes"
 	"github.com/metaleaf-io/assert"
 	"net"
+	"strings"
 	"sync"
 	"testing"
 )
 
 func TestSetLevel_WithWarning(t *testing.T) {
-	// All subsequent tests should emit only warning and error messages.
+	// Since `go test` doesn't reset the test context for each unit test,
+	// all subsequent tests should emit only warning and error messages.
 	SetLevel(WARN)
 }
 
 func TestEmit_WithInfo_ShouldBeEmpty(t *testing.T) {
+	Assert := assert.With(t)
+
 	var buf bytes.Buffer
 	SetWriter(&buf)
 
 	Info("test")
-	assert.With(t).That(buf.String()).IsEmpty()
+
+	Assert.That(buf.String()).IsEmpty()
 }
 
 func TestEmit_WithWarn_ShouldNotBeEmpty(t *testing.T) {
+	Assert := assert.With(t)
+
 	var buf bytes.Buffer
 	SetWriter(&buf)
 
 	Warn("test")
-	assert.With(t).That(buf.String()).IsNotEmpty()
+
+	Assert.That(buf.String()).IsNotEmpty()
+}
+
+func TestEmit_WithWarnAndFields_ShouldNotBeEmpty(t *testing.T) {
+	Assert := assert.With(t)
+
+	var buf bytes.Buffer
+	SetWriter(&buf)
+
+	Warn("test", Int16("port", 9000), String("hostname", "localhost"))
+
+	s := buf.String()
+	Assert.That(s).IsNotEmpty()
+
+	if !strings.Contains(s, "port=9000") {
+		t.Fatal("Port field was not in the log message")
+	}
+
+	if !strings.Contains(s, "hostname=localhost") {
+		t.Fatal("Hostname field was not in the log message")
+	}
 }
 
 func TestSetServer_WithServer_ShouldReceive(t *testing.T) {
+	Assert := assert.With(t)
+
 	// Create a simple UDP server that exits after one message is received.
 	addr, err := net.ResolveUDPAddr("udp", "localhost:9999")
-	assert.With(t).That(err).IsOk()
+	Assert.That(err).IsOk()
 
 	sock, err := net.ListenUDP("udp", addr)
-	assert.With(t).That(err).IsOk()
+	Assert.That(err).IsOk()
 
 	defer sock.Close()
 
+	// Waits for the server goroutine to finish.
 	var wait sync.WaitGroup
 
 	go func() {
 		buf := make([]byte, 4096)
 		len, _, err := sock.ReadFromUDP(buf)
-		assert.With(t).That(err).IsOk()
-		assert.With(t).That(len).IsGreaterThan(0)
-		assert.With(t).That(buf).IsNotNil()
-		assert.With(t).That(string(buf)).IsNotEmpty()
+		Assert.That(err).IsOk()
+		Assert.That(len).IsGreaterThan(0)
+		Assert.That(buf).IsNotNil()
+
+		s := string(buf)
+		Assert.That(s).IsNotEmpty()
+
+		if !strings.Contains(s, "\"port\":9000") {
+			t.Fatal("Port field was not in the log message")
+		}
+
+		if !strings.Contains(s, "\"hostname\":\"localhost\"") {
+			t.Fatal("Hostname field was not in the log message")
+		}
+
+		// Signal that the test is complete.
 		wait.Done()
 	}()
 
@@ -74,6 +117,8 @@ func TestSetServer_WithServer_ShouldReceive(t *testing.T) {
 	// Send a message to the server.
 	SetServer("localhost:9999")
 	wait.Add(1)
-	Error("test")
+	Warn("test", Int16("port", 9000), String("hostname", "localhost"))
+
+	// Wait for the test to complete.
 	wait.Wait()
 }
