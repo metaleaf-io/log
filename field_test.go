@@ -17,6 +17,7 @@
 package log
 
 import (
+	"errors"
 	"github.com/metaleaf-io/assert"
 	"reflect"
 	"testing"
@@ -103,6 +104,10 @@ func TestField_Json(t *testing.T) {
 
 	field = String("name", "value")
 	Assert.That(field.Json()).IsEqualTo("\"name\":\"value\"")
+
+	err := errors.New("error")
+	field = Err("name", err)
+	Assert.That(field.Json()).IsEqualTo("\"name\":\"error\"")
 }
 
 func TestField_String(t *testing.T) {
@@ -126,10 +131,16 @@ func TestField_String(t *testing.T) {
 
 	field = String("name", "value")
 	Assert.That(field.String()).IsEqualTo("name=value")
+
+	err := errors.New("error")
+	field = Err("name", err)
+	Assert.That(field.String()).IsEqualTo("name=error")
 }
 
 func BenchmarkField_Json(b *testing.B) {
 	var field Field
+
+	err := errors.New("error message")
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -151,6 +162,9 @@ func BenchmarkField_Json(b *testing.B) {
 		field.Json()
 
 		field = String("name", "value")
+		field.Json()
+
+		field = Err("name", err)
 		field.Json()
 	}
 }
@@ -158,6 +172,8 @@ func BenchmarkField_Json(b *testing.B) {
 func BenchmarkField_String(b *testing.B) {
 	var field Field
 
+	err := errors.New("error message")
+
 	b.ReportAllocs()
 	b.ResetTimer()
 
@@ -178,6 +194,9 @@ func BenchmarkField_String(b *testing.B) {
 		field.String()
 
 		field = String("name", "value")
+		field.String()
+
+		field = Err("name", err)
 		field.String()
 	}
 }

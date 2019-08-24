@@ -60,6 +60,11 @@ func String(name string, value string) Field {
 	return Field{Name:name, Type:reflect.String, StringValue:value}
 }
 
+// Err returns a Field that contains the message from an error.
+func Err(name string, value error) Field {
+	return Field{Name:name, Type:reflect.String, StringValue:value.Error()}
+}
+
 // Json returns the contents of the Field as `"key":value`.
 func (field Field) Json() string {
 	return "\"" + field.Name + "\":" + stringValue(field, true)
