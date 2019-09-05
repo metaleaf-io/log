@@ -33,6 +33,16 @@ func TestBool(t *testing.T) {
 	Assert.That(field.BoolValue).IsEqualTo(true)
 }
 
+func TestInt(t *testing.T) {
+	Assert := assert.With(t)
+
+	field := Int("name", -9876)
+
+	Assert.That(field.Name).IsEqualTo("name")
+	Assert.That(field.Type).IsEqualTo(reflect.Int)
+	Assert.That(field.IntValue).IsEqualTo(-9876)
+}
+
 func TestInt8(t *testing.T) {
 	Assert := assert.With(t)
 
@@ -83,6 +93,16 @@ func TestString(t *testing.T) {
 	Assert.That(field.StringValue).IsEqualTo("value")
 }
 
+func TestErr(t *testing.T) {
+	Assert := assert.With(t)
+
+	field := Err(errors.New("sample error"))
+
+	Assert.That(field.Name).IsEqualTo("error")
+	Assert.That(field.Type).IsEqualTo(reflect.String)
+	Assert.That(field.StringValue).IsEqualTo("sample error")
+}
+
 func TestField_Json(t *testing.T) {
 	Assert := assert.With(t)
 	var field Field
@@ -106,8 +126,8 @@ func TestField_Json(t *testing.T) {
 	Assert.That(field.Json()).IsEqualTo("\"name\":\"value\"")
 
 	err := errors.New("error")
-	field = Err("name", err)
-	Assert.That(field.Json()).IsEqualTo("\"name\":\"error\"")
+	field = Err(err)
+	Assert.That(field.Json()).IsEqualTo("\"error\":\"error\"")
 }
 
 func TestField_String(t *testing.T) {
@@ -133,8 +153,8 @@ func TestField_String(t *testing.T) {
 	Assert.That(field.String()).IsEqualTo("name=value")
 
 	err := errors.New("error")
-	field = Err("name", err)
-	Assert.That(field.String()).IsEqualTo("name=error")
+	field = Err(err)
+	Assert.That(field.String()).IsEqualTo("error=error")
 }
 
 func BenchmarkField_Json(b *testing.B) {
@@ -164,7 +184,7 @@ func BenchmarkField_Json(b *testing.B) {
 		field = String("name", "value")
 		field.Json()
 
-		field = Err("name", err)
+		field = Err(err)
 		field.Json()
 	}
 }
@@ -196,7 +216,7 @@ func BenchmarkField_String(b *testing.B) {
 		field = String("name", "value")
 		field.String()
 
-		field = Err("name", err)
+		field = Err(err)
 		field.String()
 	}
 }

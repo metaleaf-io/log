@@ -35,6 +35,11 @@ func Bool(name string, value bool) Field {
 	return Field{Name:name, Type:reflect.Bool, BoolValue:value}
 }
 
+// Int returns a Field that contains a default integer.
+func Int(name string, value int) Field {
+	return Field{Name:name, Type:reflect.Int, IntValue:int64(value)}
+}
+
 // Int8 returns a Field that contains an 8-bit integer
 func Int8(name string, value int8) Field {
 	return Field{Name:name, Type:reflect.Int8, IntValue:int64(value)}
@@ -61,8 +66,8 @@ func String(name string, value string) Field {
 }
 
 // Err returns a Field that contains the message from an error.
-func Err(name string, value error) Field {
-	return Field{Name:name, Type:reflect.String, StringValue:value.Error()}
+func Err(value error) Field {
+	return Field{Name:"error", Type:reflect.String, StringValue:value.Error()}
 }
 
 // Json returns the contents of the Field as `"key":value`.
